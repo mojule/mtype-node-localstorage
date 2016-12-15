@@ -1,7 +1,7 @@
 {
   "name": "mtype-node-localstorage",
   "version": "0.1.0",
-  "description": "A window.localStorage adapter for mojule stores",
+  "description": "mojule store using a window.localStorage adapter",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"

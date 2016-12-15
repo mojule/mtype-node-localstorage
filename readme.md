@@ -1,3 +1,3 @@
 # mtype-node-localstorage
 
-A window.localStorage adapter for mojule stores
+mojule store using a window.localStorage adapter
