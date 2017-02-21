@@ -196,9 +196,8 @@ describe( 'Store', () => {
         assert( dog.value._id.startsWith( 'dog' ) )
       })
   )
-  it( 'dumps the map', () => {
-    console.log( JSON.stringify([...localStorage]) )
-
-  })
+  // it( 'dumps the map', () => {
+  //   console.log( JSON.stringify([...localStorage]) )
+  // })
 
 })
