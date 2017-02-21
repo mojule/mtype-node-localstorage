@@ -7,8 +7,8 @@ var Adapter = function Adapter(name, options) {
 
   var opts = Object.assign({}, defaults, options);
   var dbName = [opts.namespace, name].join('-');
-  var dbJson = window.localStorage.getItem(dbName);
-
+  var storageApi = opts.storageApi;
+  var dbJson = storageApi.getItem(dbName);
   var db = void 0;
 
   if (typeof dbJson === 'string') {
@@ -19,7 +19,7 @@ var Adapter = function Adapter(name, options) {
       idMap: {},
       keyMap: {}
     };
-    window.localStorage.setItem(dbName, JSON.stringify(db));
+    storageApi.setItem(dbName, JSON.stringify(db));
   }
 
   var api = {
@@ -27,7 +27,7 @@ var Adapter = function Adapter(name, options) {
       return _exists(db, id);
     },
     save: function save(obj) {
-      return _save(db, obj);
+      return _save(db, obj, storageApi);
     },
     load: function load(id) {
       return _load(db, id);
@@ -36,7 +36,7 @@ var Adapter = function Adapter(name, options) {
       return _get(db, key);
     },
     remove: function remove(id) {
-      return _remove(db, id);
+      return _remove(db, id, storageApi);
     },
     all: function all() {
       return _all(db);
@@ -50,14 +50,22 @@ var Adapter = function Adapter(name, options) {
 };
 
 var defaults = {
-  namespace: 'mojuleStore'
+  namespace: 'mojuleStore',
+  storageApi: {
+    getItem: function getItem(key) {
+      return window.localStorage.getItem(key);
+    },
+    setItem: function setItem(key, value) {
+      window.localStorage.setItem(key, value);
+    }
+  }
 };
 
 var _exists = function _exists(db, id) {
   return Promise.resolve(id in db.idMap);
 };
 
-var _save = function _save(db, obj) {
+var _save = function _save(db, obj, storageApi) {
   var id = obj.value._id;
   var key = obj.value.nodeType;
 
@@ -67,7 +75,7 @@ var _save = function _save(db, obj) {
 
   db.keyMap[key].push(id);
 
-  window.localStorage.setItem(db.dbName, JSON.stringify(db));
+  storageApi.setItem(db.dbName, JSON.stringify(db));
 
   return Promise.resolve(obj);
 };
@@ -84,7 +92,7 @@ var _get = function _get(db, key) {
   return _load(db, ids);
 };
 
-var _remove = function _remove(db, id) {
+var _remove = function _remove(db, id, storageApi) {
   return _load(db, id).then(function (obj) {
     var key = obj.value.nodeType;
 
@@ -94,7 +102,7 @@ var _remove = function _remove(db, id) {
       return currentId !== id;
     });
 
-    window.localStorage.setItem(db.dbName, JSON.stringify(db));
+    storageApi.setItem(db.dbName, JSON.stringify(db));
 
     return obj;
   });

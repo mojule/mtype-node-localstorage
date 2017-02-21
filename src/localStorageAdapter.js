@@ -7,11 +7,11 @@ const Adapter = ( name, options ) => {
 
   const opts = Object.assign( {}, defaults, options )
   const dbName = [ opts.namespace, name ].join( '-' )
-  const dbJson = window.localStorage.getItem( dbName )
-
+  const storageApi = opts.storageApi
+  const dbJson = storageApi.getItem( dbName )
   let db
 
-  if( typeof dbJson === 'string' ){
+  if( typeof dbJson === 'string' ) {
     db = JSON.parse( dbJson )
   } else {
     db = {
@@ -19,15 +19,15 @@ const Adapter = ( name, options ) => {
       idMap: {},
       keyMap: {}
     }
-    window.localStorage.setItem( dbName, JSON.stringify( db ) )
+    storageApi.setItem( dbName, JSON.stringify( db ) )
   }
 
   const api = {
     exists: id => exists( db, id ),
-    save: obj => save( db, obj ),
+    save: obj => save( db, obj,storageApi ),
     load: id => load( db, id ),
     get: key => get( db, key ),
-    remove: id => remove( db, id ),
+    remove: id => remove( db, id, storageApi ),
     all: () => all( db )
   }
 
@@ -38,12 +38,20 @@ const Adapter = ( name, options ) => {
 }
 
 const defaults = {
-  namespace: 'mojuleStore'
+  namespace: 'mojuleStore',
+  storageApi : {
+    getItem: ( key ) => {
+      return window.localStorage.getItem( key )
+    },
+    setItem: ( key, value ) => {
+      window.localStorage.setItem( key, value )
+    }
+  }
 }
 
 const exists = ( db, id ) => Promise.resolve( id in db.idMap )
 
-const save = ( db, obj ) => {
+const save = ( db, obj, storageApi ) => {
   const id = obj.value._id
   const key = obj.value.nodeType
 
@@ -54,7 +62,7 @@ const save = ( db, obj ) => {
 
   db.keyMap[ key ].push( id )
 
-  window.localStorage.setItem( db.dbName, JSON.stringify( db ) )
+  storageApi.setItem( db.dbName, JSON.stringify( db ) )
 
   return Promise.resolve( obj )
 }
@@ -64,12 +72,12 @@ const load = ( db, id ) => Array.isArray( id ) ?
   Promise.resolve( db.idMap[ id ] )
 
 const get = ( db, key ) => {
-  const ids = Array.isArray( db.keyMap[ key ] ) ? db.keyMap[ key ]: []
+  const ids = Array.isArray( db.keyMap[ key ] ) ? db.keyMap[ key ] : []
 
   return load( db, ids )
 }
 
-const remove = ( db, id ) =>
+const remove = ( db, id, storageApi ) =>
   load( db, id )
     .then( obj => {
       const key = obj.value.nodeType
@@ -80,7 +88,7 @@ const remove = ( db, id ) =>
         currentId => currentId !== id
       )
 
-      window.localStorage.setItem( db.dbName, JSON.stringify( db ) )
+      storageApi.setItem( db.dbName, JSON.stringify( db ) )
 
       return obj
     })
